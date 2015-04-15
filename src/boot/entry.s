@@ -1,6 +1,7 @@
 ;; Disable kmain call for now while we setup the inital environment.
 ; extern _kmain
 
+%include "src/buildver.inc"
 MODULEALIGN equ 1 << 0
 MEMINFO equ 1 << 1
 FLAGS equ MODULEALIGN | MEMINFO
@@ -13,7 +14,6 @@ KERNEL_PNUM equ (KERNEL_VBASE >> 22)
 
 section .data
 align 0x1000
-%include "src/buildver.inc"
 
 BootPageDir:
   ; 4 meg page, read/write, page is present (bits 7, 1, 0)
@@ -63,7 +63,10 @@ KernelHigh:
 .pingconsole:
   mov ecx, VERSION
   call print_console
-
+  call console_nl
+  mov ecx, BUILD_DATE
+  call print_console
+  call console_nl
 ;;  call _kmain
   hlt
 .loop:
@@ -81,6 +84,13 @@ print_console:
 .done:
   ret
 
+console_nl:
+  mov dx, 0x3F8
+  mov al, 0x0A
+  out dx, al
+  mov al, 0x0D
+  out dx, al
+  ret
 
 section .bss
 align 32
