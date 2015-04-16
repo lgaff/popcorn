@@ -1,4 +1,7 @@
+; vim:ft=nasm
 extern _kmain
+extern print_console
+extern console_nl
 
 %include "src/buildver.inc"
 MODULEALIGN equ 1 << 0
@@ -70,26 +73,6 @@ KernelHigh:
   hlt
 .loop:
   jmp .loop
-
-print_console:
-  mov dx, 0x3F8
-.print_char:
-  mov al, [ecx]
-  cmp al, 0
-  jz .done
-  out dx, al
-  inc ecx
-  jmp .print_char
-.done:
-  ret
-
-console_nl:
-  mov dx, 0x3F8
-  mov al, 0x0A
-  out dx, al
-  mov al, 0x0D
-  out dx, al
-  ret
 
 section .bss
 align 32
