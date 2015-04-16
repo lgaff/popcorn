@@ -55,3 +55,7 @@ task :qemu_disk => ["popcorn", "rnux.dsk", "img"] do
     sh "sudo losetup -d #{loopfile}"
   end
 end
+
+task :clean do
+  sh "rm -rf obj popcorn"
+end
