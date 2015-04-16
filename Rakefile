@@ -3,13 +3,13 @@ require 'yaml'
 
 TARGET = "i386-unknown-none-elf"
 CC = "clang"
-CFLAGS = "--target #{TARGET} -c"
+CFLAGS = "-I src/include -target #{TARGET} -c"
 AS = "nasm"
 ASFLAGS = "-f elf32"
 OBJDIR = "objects/"
 LDFLAGS = "-m elf_i386 -gc-sections -static -nostartfiles -nodefaultlibs"
 
-SOURCE_FILES = Rake::FileList.new("src/**/*.s")
+SOURCE_FILES = Rake::FileList.new("src/**/*.s", "src/**/*.c")
 
 task :default => "popcorn"
 
@@ -19,7 +19,7 @@ file "popcorn" => ["src/buildver.inc", :objects] do
 end
 
 
-task :objects => [SOURCE_FILES.pathmap("%{^src,obj}X.o")]
+task :objects => SOURCE_FILES.pathmap("%{^src,obj}X.o")
 
 file "src/buildver.inc" do
   version = YAML.load_file('version.yml')
@@ -36,7 +36,8 @@ rule ".o" => [->(f){f.pathmap("%{^obj,src}X.s")}, "obj"] do |srcfile|
   sh "#{AS} #{ASFLAGS} -o #{srcfile.name} #{srcfile.source}"
 end
 
-rule ".o" => ".c" do |srcfile|
+rule ".o" => [->(f){f.pathmap("%{^obj,src}X.c")}, "obj"] do |srcfile|
+  mkdir_p srcfile.name.pathmap("%d")
   sh "#{CC} #{CFLAGS} -o #{srcfile.name} #{srcfile.source}"
 end
 
