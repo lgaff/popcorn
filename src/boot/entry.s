@@ -1,5 +1,4 @@
-;; Disable kmain call for now while we setup the inital environment.
-; extern _kmain
+extern _kmain
 
 %include "src/buildver.inc"
 MODULEALIGN equ 1 << 0
@@ -67,7 +66,7 @@ KernelHigh:
   mov ecx, BUILD_DATE
   call print_console
   call console_nl
-;;  call _kmain
+  call _kmain
   hlt
 .loop:
   jmp .loop
