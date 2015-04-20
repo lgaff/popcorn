@@ -1,80 +1,138 @@
 ; vim:ft=nasm
-extern _kmain
-extern print_console
-extern console_nl
 
-%include "src/buildver.inc"
+; Mutliboot constants
 MODULEALIGN equ 1 << 0
 MEMINFO equ 1 << 1
 FLAGS equ MODULEALIGN | MEMINFO
-;; This is the old GRUB 1 magic number, should still work, but may need changing.
 MAGIC equ 0x1BADB002
 CHECKSUM equ -(MAGIC + FLAGS)
 
-KERNEL_VBASE equ 0xc0000000
-KERNEL_PNUM equ (KERNEL_VBASE >> 22)
+; Popcorn memory locations
+KERNEL_VBASE equ 0xFFFFFFFF80000000
+STACKSIZE equ 0x4000 ; 16k initial kernel stack.
 
-section .data
-align 0x1000
-
-BootPageDir:
-  ; 4 meg page, read/write, page is present (bits 7, 1, 0)
-  dd 0x00000083 ; (bootPTE-KERNEL_VBASE) + 0x3
-  times (KERNEL_PNUM -1) dd 0 ; empty pages before kernel space
-  dd 0x00000083 ; hhPTE - KERNEL_VBASE + 0x3
-  times (1024 - KERNEL_PNUM -1) dd 0
-
-section .mboot
+; Multiboot header - should be first, load to 1MiB
+section .multiboot
 align 4
-MultibootHeader:
+global mb_info
+multiboot:
   dd MAGIC
   dd FLAGS
   dd CHECKSUM
 
-STACKSIZE equ 0x4000
-global start
-start:
-  ; Need to enable paging and jump to 3GiB.
-  xchg bx, bx
-  mov ecx, (BootPageDir - KERNEL_VBASE)
-  mov cr3, ecx
+; Start here in ia-32 mode.
+section .start32_text
+bits 32
+global goshort
+goshort:
+xchg bx, bx
+; save the multiboot info in e[ab]x
+mov [mb_signature - KERNEL_VBASE], eax
+mov [mb_ptr - KERNEL_VBASE], ebx
 
-  mov ecx, cr4
-  or ecx,  0x00000010 ; Page size enable.
-  mov cr4, ecx
+; check if long mode available
+mov eax, 0x80000000
+cpuid
+cmp eax, 0x80000001
+jb nolong
+mov eax, 0x80000001
+cpuid
+test edx, 1 << 29
+jz nolong
 
+goLong:
+  ; Enable ia-32e mode
+  ; set flags PSE, PG, PAE
+  mov eax, cr4
+  or eax, 0x80 | 0x20 | 0x10
+  mov cr4, eax
+
+  mov eax, (PML4 - KERNEL_VBASE)
+  mov cr3, eax
+
+  ; set the long mode bit in EFER
+  ; TODO: enable NX/syscall later (maybe)
+  mov ecx, 0xC0000080
+  rdmsr
+  or eax, 1 << 8
+  wrmsr
+
+  ; Enable paging
   mov ecx, cr0
-  or ecx, 0x80000000 ; PG enable
+  or ecx, 1 << 31
   mov cr0, ecx
 
-  ; Paging is enabled, we should be in kernel space now. Will need a long jump to set eip correctly
-  ; as it still has the paddr
-  lea ecx, [KernelHigh]
-  jmp ecx
+  lgdt [GDT64.Ptr - KERNEL_VBASE]
+  jmp 0x8:start64
+
+nolong:
+  jmp nolong
+
+bits 64
+start64:
+  mov dx, 0x3F8
+  mov ax, 'g'
+  out dx, al
+
+  mov rax, highHalf
+  jmp rax
 
 section .text
-align 4
-KernelHigh:
-  ; Here's where we should invalidate the 0th page, but we still need it for now for VGA terminal.
-;  mov dword [BootPageDir], 0
-;  invlpg [0]
-
-  mov esp, stack + STACKSIZE
-  push eax  ; Multiboot magic number
-  push ebx  ; Multiboot info paddr
-.pingconsole:
-  mov ecx, VERSION
-  call print_console
-  call console_nl
-  mov ecx, BUILD_DATE
-  call print_console
-  call console_nl
+extern _kmain
+highHalf:
+  mov rsp, stack + STACKSIZE
+  mov al, 'b'
+  out dx, al
   call _kmain
-  hlt
 .loop:
   jmp .loop
 
+section .start32_data
+strNolong:
+  db "CPU does not support long mode operation",0
+;; TODO: fix hard link for build versions here.
+
+section .pagedata
+global PML4
+PML4:
+  dd PDP0 - KERNEL_VBASE + 3, 0
+  times 512-2-($-PML4)/8 dq 0
+  dd PML4 - KERNEL_VBASE + 3, 0
+  dd KPDP - KERNEL_VBASE + 3, 0
+
+global PDP0
+PDP0:
+  dd PD0 - KERNEL_VBASE + 3, 0
+  times 511 dq 0
+KPDP:
+  times 510 dq 0
+  dd PD0 - KERNEL_VBASE + 3, 0
+  dq 0
+
+; first/last GiB, with PSE means 2 MiB per page.
+; ID map first 4 MiB to -2GiB, stack at top of memory
+; after kernel image
+global PD0
+PD0:
+  dd 0x000183, 0 ; 0-2 MiB
+  dd 0x200183, 0 ; 2-4 MiB
+  times 510 dq 0
+
+section .data
+GDT64:
+  dq 0             ; Null descriptor
+  dd 0, 0x00209800 ; 64 bit code
+  dd 0, 0x00009000 ; 64 bit data
+.Ptr:
+  dw $ - GDT64 - 1
+  dq GDT64 - KERNEL_VBASE
+  dd 0
+
 section .bss
 align 32
+mb_signature:
+  resb 2
+mb_ptr:
+  resb 2
 stack:
   resb STACKSIZE

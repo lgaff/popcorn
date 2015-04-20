@@ -1,22 +1,29 @@
-ENTRY(start)
-OUTPUT_FORMAT(elf32-i386)
+ENTRY(goshort)
+OUTPUT_FORMAT(elf64-x86-64)
+_kernel_vbase = 0xFFFFFFFF80000000;
 
 SECTIONS {
   . = 0x100000;
-  .mboot : {
-    *(.mboot)
+
+  .boot : AT(ADDR(.boot)) {
+    KEEP(*(.multiboot))
+    *(.start32_text)
+    *(.start32_data)
   }
-  . += 0xC0000000;
-  .text : AT(ADDR(.text) - 0xC0000000) {
+  . += _kernel_vbase;
+  .text : AT(ADDR(.text) - _kernel_vbase) {
     *(.text)
+    *(.text.*)
     *(.rodata*)
   }
 
-  .data ALIGN (0x1000) : AT(ADDR(.data) - 0xC0000000) {
+  .data ALIGN (0x1000) : AT(ADDR(.data) - _kernel_vbase) {
+    *(.pagedata)
     *(.data)
+
   }
 
-  .bss : AT(ADDR(.bss) - 0xC0000000) {
+  .bss : AT(ADDR(.bss) - _kernel_vbase) {
     _sbss = .;
     *(COMMON)
     *(.bss)

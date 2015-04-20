@@ -1,13 +1,13 @@
 require 'rake'
 require 'yaml'
 
-TARGET = "i386-unknown-none-elf"
+TARGET = "x86_64-unknown-none-elf"
 CC = "clang"
 CFLAGS = "-ffreestanding --sysroot=src -I src/include -target #{TARGET} -c"
 AS = "nasm"
-ASFLAGS = "-f elf32"
+ASFLAGS = "-f elf64"
 OBJDIR = "objects/"
-LDFLAGS = "-m elf_i386 -gc-sections -static -nostartfiles -nodefaultlibs"
+LDFLAGS = "-m elf_x86_64 -gc-sections -static -nostartfiles -nodefaultlibs"
 
 SOURCE_FILES = Rake::FileList.new("src/**/*.s", "src/**/*.c")
 
