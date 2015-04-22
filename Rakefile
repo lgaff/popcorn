@@ -23,8 +23,8 @@ task :objects => SOURCE_FILES.pathmap("%{^src,obj}X.o")
 
 file "src/buildver.inc" do
   version = YAML.load_file('version.yml')
-  sh "echo 'VERSION dd \"Popcorn kernel v#{version['major']}.#{version['minor']}.#{version['patch']}-#{version['additional_labels']}\", 0' > src/buildver.inc"
-  sh "echo 'BUILD_DATE dd \"Build date #{DateTime.now}\",0' >> src/buildver.inc"
+  sh "echo 'VERSION db \"Popcorn kernel v#{version['major']}.#{version['minor']}.#{version['patch']}-#{version['additional_labels']}\", 0' > src/buildver.inc"
+  sh "echo 'BUILD_DATE db \"Build date #{DateTime.now}\", 0' >> src/buildver.inc"
   # SOURCE_FILES.include("src/buildver.inc")
 end
 

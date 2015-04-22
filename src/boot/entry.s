@@ -1,5 +1,4 @@
 ; vim:ft=nasm
-
 ; Mutliboot constants
 MODULEALIGN equ 1 << 0
 MEMINFO equ 1 << 1
@@ -26,6 +25,10 @@ bits 32
 global goshort
 goshort:
 xchg bx, bx
+mov esi, VERSION
+call print_console
+mov esi, BUILD_DATE
+call print_console
 ; save the multiboot info in e[ab]x
 mov [mb_signature - KERNEL_VBASE], eax
 mov [mb_ptr - KERNEL_VBASE], ebx
@@ -47,6 +50,9 @@ goLong:
   or eax, 0x80 | 0x20 | 0x10
   mov cr4, eax
 
+  mov esi, str32e
+  call print_console
+
   mov eax, (PML4 - KERNEL_VBASE)
   mov cr3, eax
 
@@ -62,16 +68,41 @@ goLong:
   or ecx, 1 << 31
   mov cr0, ecx
 
+  mov esi, strPgOK
+  call print_console
+
   lgdt [GDT64.Ptr - KERNEL_VBASE]
   jmp 0x8:start64
 
 nolong:
-  jmp nolong
+  mov esi, strNolong
+  call print_console
+.halt:
+  jmp .halt
+
+print_console:
+  mov dx, 0x3F8
+.print_char:
+  lodsb
+  cmp al, 0
+  jz .done
+  out dx, al
+  inc ecx
+  jmp .print_char
+.done:
+  mov dx, 0x3F8
+  mov al, 0x0A
+  out dx, al
+  mov al, 0x0D
+  out dx, al
+  ret
+
+
 
 bits 64
 start64:
   mov dx, 0x3F8
-  mov ax, 'g'
+  mov al, '.'
   out dx, al
 
   mov rax, highHalf
@@ -80,9 +111,10 @@ start64:
 section .text
 extern _kmain
 highHalf:
-  mov rsp, stack + STACKSIZE
-  mov al, 'b'
+  mov dx, 0x3F8
+  mov al, '.'
   out dx, al
+  mov rsp, stack + STACKSIZE
   call _kmain
 .loop:
   jmp .loop
@@ -90,6 +122,9 @@ highHalf:
 section .start32_data
 strNolong:
   db "CPU does not support long mode operation",0
+  str32e db "IA-32e mode: OK",0
+  strPgOK db "Paging: OK",0
+  %include "src/buildver.inc"
 ;; TODO: fix hard link for build versions here.
 
 section .pagedata
@@ -127,6 +162,9 @@ GDT64:
   dw $ - GDT64 - 1
   dq GDT64 - KERNEL_VBASE
   dd 0
+
+strBoot db "Boot: OK\n",0
+strEnter db "Entering the kernel: ",0
 
 section .bss
 align 32
