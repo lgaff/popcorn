@@ -3,7 +3,7 @@ require 'yaml'
 
 TARGET = "x86_64-unknown-none-elf"
 CC = "clang"
-CFLAGS = "-ffreestanding --sysroot=src -I src/include -target #{TARGET} -c"
+CFLAGS = "-ffreestanding --sysroot=src -I src/include -I src/libc/include -target #{TARGET} -c"
 AS = "nasm"
 ASFLAGS = "-f elf64"
 OBJDIR = "objects/"
