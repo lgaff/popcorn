@@ -114,8 +114,17 @@ highHalf:
   mov dx, 0x3F8
   mov al, '.'
   out dx, al
-  mov rsp, stack + STACKSIZE
-  call _kmain
+
+        ; crt0 begins here        
+global _start
+extern _init
+_start:
+        mov rsp, stack_bottom + STACKSIZE
+        ; Call libc global constructors
+        call _init
+        call _kmain
+
+        cli
 .loop:
   jmp .loop
 
@@ -172,5 +181,5 @@ mb_signature:
   resb 2
 mb_ptr:
   resb 2
-stack:
+stack_bottom:
   resb STACKSIZE
