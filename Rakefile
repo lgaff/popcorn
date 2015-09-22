@@ -7,18 +7,21 @@ CC = "clang"
 CFLAGS = "-ffreestanding --sysroot=sysroot -target #{TARGET} -c"
 AS = "nasm"
 ASFLAGS = "-f elf64"
-OBJDIR = "objects/"
 LDFLAGS = "-m elf_x86_64 -gc-sections -static -nostartfiles -nodefaultlibs"
 
 PROJECTS = ["popcorn", "libc"]
 
-SOURCE_FILES = Rake::FileList.new("src/**/*.s", "src/**/*.S", "src/**/*.c")
+SOURCE_FILES = Rake::FileList.new("src/**/*.s", "src/**/*.S", "src/**/*.c").exclude(/crt..S/)
 
-task :default => [:sysroot, "popcorn"]
+CRTI_OBJ="obj/popcorn/arch/#{ARCH}/crti.o"
+CRTBEGIN_OBJ=%x[#{CC} -print-file-name=crtbegin.o].chomp
+CRTEND_OBJ=%x[#{CC} -print-file-name=crtend.o].chomp
+CRTN_OBJ="obj/popcorn/arch/#{ARCH}/crtn.o"
 
-file "popcorn" => ["src/buildver.inc", :objects] do
-  sh "ld #{LDFLAGS} -T src/popcorn/arch/#{ARCH}/link.ld -o sysroot/popcorn #{SOURCE_FILES.pathmap("%{^src,obj}X.o")}" #"
-  sh "rm src/buildver.inc"
+task :default => [:sysroot, :popcorn]
+
+task :popcorn => ["src/buildver.inc", :objects, CRTI_OBJ, CRTN_OBJ] do
+  sh "ld #{LDFLAGS} -T src/popcorn/arch/#{ARCH}/link.ld -o sysroot/boot/popcorn #{CRTI_OBJ} #{CRTBEGIN_OBJ} #{SOURCE_FILES.pathmap("%{^src,obj}X.o")} #{CRTEND_OBJ} #{CRTN_OBJ}" #"
 end
 
 
@@ -58,6 +61,10 @@ task :qemu_disk => ["popcorn", :sysroot, "rnux.dsk", "img"] do
     sh "sudo umount img"
     sh "sudo losetup -d #{loopfile}"
   end
+end
+
+task :iso => :popcorn do
+  sh "grub-mkrescue -o popcorn.iso sysroot"
 end
 
 task :sysroot do
