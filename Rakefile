@@ -9,17 +9,19 @@ ASFLAGS = "-f elf64"
 OBJDIR = "objects/"
 LDFLAGS = "-m elf_x86_64 -gc-sections -static -nostartfiles -nodefaultlibs"
 
-SOURCE_FILES = Rake::FileList.new("src/**/*.s", "src/**/*.c")
+PROJECTS = ["popcorn", "libc"]
+
+SOURCE_FILES = Rake::FileList.new("src/**/*.s", "src/**/*.S", "src/**/*.c")
 
 task :default => "popcorn"
 
 file "popcorn" => ["src/buildver.inc", :objects] do
-  sh "ld #{LDFLAGS} -T src/link.ld -o popcorn #{SOURCE_FILES.pathmap("%{^src,obj}X.o")}"
+  sh "ld #{LDFLAGS} -T src/link.ld -o popcorn #{SOURCE_FILES.pathmap("%{^src,obj}X.o")}" #"
   sh "rm src/buildver.inc"
 end
 
 
-task :objects => SOURCE_FILES.pathmap("%{^src,obj}X.o")
+task :objects => [:sysroot, SOURCE_FILES.pathmap("%{^src,obj}X.o")]
 
 file "src/buildver.inc" do
   version = YAML.load_file('version.yml')
@@ -56,6 +58,13 @@ task :qemu_disk => ["popcorn", "rnux.dsk", "img"] do
   end
 end
 
+task :sysroot do
+  sh "mkdir -p sysroot/usr"
+  PROJECTS.each do |project|
+    sh "cp -rv src/#{project}/include sysroot/usr/"
+  end
+end
+
 task :clean do
-  sh "rm -rf obj popcorn"
+  sh "rm -rf obj popcorn sysroot"
 end
