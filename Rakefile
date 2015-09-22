@@ -3,7 +3,7 @@ require 'yaml'
 
 TARGET = "x86_64-unknown-none-elf"
 CC = "clang"
-CFLAGS = "-ffreestanding --sysroot=src -I src/include -I src/libc/include -target #{TARGET} -c"
+CFLAGS = "-ffreestanding --sysroot=sysroot -target #{TARGET} -c"
 AS = "nasm"
 ASFLAGS = "-f elf64"
 OBJDIR = "objects/"
@@ -13,7 +13,7 @@ PROJECTS = ["popcorn", "libc"]
 
 SOURCE_FILES = Rake::FileList.new("src/**/*.s", "src/**/*.S", "src/**/*.c")
 
-task :default => "popcorn"
+task :default => [:sysroot, "popcorn"]
 
 file "popcorn" => ["src/buildver.inc", :objects] do
   sh "ld #{LDFLAGS} -T src/link.ld -o popcorn #{SOURCE_FILES.pathmap("%{^src,obj}X.o")}" #"
@@ -21,7 +21,7 @@ file "popcorn" => ["src/buildver.inc", :objects] do
 end
 
 
-task :objects => [:sysroot, SOURCE_FILES.pathmap("%{^src,obj}X.o")]
+task :objects => SOURCE_FILES.pathmap("%{^src,obj}X.o")
 
 file "src/buildver.inc" do
   version = YAML.load_file('version.yml')
@@ -33,7 +33,7 @@ end
 
 directory "obj"
 
-rule ".o" => [->(f){f.pathmap("%{^obj,src}X.s")}, "obj"] do |srcfile|
+rule ".o" => [->(f){f.pathmap("%{^obj,src}X.S")}, "obj"] do |srcfile|
   mkdir_p srcfile.name.pathmap("%d")
   sh "#{AS} #{ASFLAGS} -o #{srcfile.name} #{srcfile.source}"
 end
