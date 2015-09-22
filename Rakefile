@@ -1,7 +1,8 @@
 require 'rake'
 require 'yaml'
 
-TARGET = "x86_64-unknown-none-elf"
+ARCH = "x86_64"
+TARGET = "#{ARCH}-unknown-none-elf"
 CC = "clang"
 CFLAGS = "-ffreestanding --sysroot=sysroot -target #{TARGET} -c"
 AS = "nasm"
@@ -13,10 +14,10 @@ PROJECTS = ["popcorn", "libc"]
 
 SOURCE_FILES = Rake::FileList.new("src/**/*.s", "src/**/*.S", "src/**/*.c")
 
-task :default => [:sysroot, "popcorn"]
+task :default => [:sysroot, "sysroot/popcorn"]
 
-file "popcorn" => ["src/buildver.inc", :objects] do
-  sh "ld #{LDFLAGS} -T src/link.ld -o popcorn #{SOURCE_FILES.pathmap("%{^src,obj}X.o")}" #"
+file "sysroot/popcorn" => ["src/buildver.inc", :objects] do
+  sh "ld #{LDFLAGS} -T src/popcorn/arch/#{ARCH}/link.ld -o sysroot/popcorn #{SOURCE_FILES.pathmap("%{^src,obj}X.o")}" #"
   sh "rm src/buildver.inc"
 end
 
@@ -60,6 +61,8 @@ end
 
 task :sysroot do
   sh "mkdir -p sysroot/usr"
+  sh "mkdir -p sysroot/boot/grub/"
+  sh "cp util/grub.cfg sysroot/boot/grub/"
   PROJECTS.each do |project|
     sh "cp -rv src/#{project}/include sysroot/usr/"
   end
