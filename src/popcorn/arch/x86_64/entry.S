@@ -24,7 +24,7 @@ section .start32_text
 bits 32
 global goshort
 goshort:
-xchg bx, bx
+; xchg bx, bx
 mov esi, VERSION
 call print_console
 mov esi, BUILD_DATE
@@ -110,17 +110,15 @@ start64:
 
 section .text
 extern _kmain
-highHalf:
-  mov dx, 0x3F8
-  mov al, '.'
-  out dx, al
-
-        ; crt0 begins here        
-global _start
 extern _init
-_start:
+highHalf:
+        mov dx, 0x3F8
+        mov al, '.'
+        out dx, al
+        ; crt0 begins here        
         mov rsp, stack_bottom + STACKSIZE
         ; Call libc global constructors
+        xchg bx, bx
         call _init
         call _kmain
 
