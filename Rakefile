@@ -14,9 +14,9 @@ PROJECTS = ["popcorn", "libc"]
 
 SOURCE_FILES = Rake::FileList.new("src/**/*.s", "src/**/*.S", "src/**/*.c")
 
-task :default => [:sysroot, "sysroot/popcorn"]
+task :default => [:sysroot, "popcorn"]
 
-file "sysroot/popcorn" => ["src/buildver.inc", :objects] do
+file "popcorn" => ["src/buildver.inc", :objects] do
   sh "ld #{LDFLAGS} -T src/popcorn/arch/#{ARCH}/link.ld -o sysroot/popcorn #{SOURCE_FILES.pathmap("%{^src,obj}X.o")}" #"
   sh "rm src/buildver.inc"
 end
@@ -46,13 +46,14 @@ end
 
 #todo write rule to make rnux.dsk image
 directory "img"
-task :qemu_disk => ["popcorn", "rnux.dsk", "img"] do
+task :qemu_disk => ["popcorn", :sysroot, "rnux.dsk", "img"] do
   loopfile = `losetup -f`.chomp
   if loopfile == ''
     raise "No free loopback devices available"
   else
     sh "sudo losetup #{loopfile} -o 1048576 rnux.dsk"
     sh "sudo mount #{loopfile} img"
+    sh "sudo cp -rv sysroot/* img/"
     sh "sudo cp popcorn img/boot/"
     sh "sudo umount img"
     sh "sudo losetup -d #{loopfile}"
