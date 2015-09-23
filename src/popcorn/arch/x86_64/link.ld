@@ -10,12 +10,13 @@ SECTIONS {
     *(.start32_text)
     *(.start32_data)
   }
-  . += _kernel_vbase;
+        . += _kernel_vbase;
+
   .text : AT(ADDR(.text) - _kernel_vbase) {
     *(.text)
     *(.text.*)
     *(.rodata*)
-  }
+        }
 
   .data ALIGN (0x1000) : AT(ADDR(.data) - _kernel_vbase) {
     *(.pagedata)

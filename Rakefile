@@ -4,10 +4,12 @@ require 'yaml'
 ARCH = "x86_64"
 TARGET = "#{ARCH}-unknown-none-elf"
 CC = "clang"
-CFLAGS = "-ffreestanding --sysroot=sysroot -target #{TARGET} -c"
+LD = "clang"
+CFLAGS = "-ffreestanding --sysroot=sysroot -target #{TARGET} -Wall -Wextra"
 AS = "nasm"
 ASFLAGS = "-f elf64"
-LDFLAGS = "-m elf_x86_64 -gc-sections -static -nostartfiles -nodefaultlibs"
+LDFLAGS= "-ffreestanding -nostdlib -target #{TARGET} -Wall -Wextra"
+# LDFLAGS = "-m elf_x86_64 -gc-sections -static -nostartfiles -nodefaultlibs"
 
 PROJECTS = ["popcorn", "libc"]
 
@@ -21,9 +23,14 @@ CRTN_OBJ="obj/popcorn/arch/#{ARCH}/crtn.o"
 task :default => [:sysroot, :popcorn]
 
 task :popcorn => ["src/buildver.inc", :objects, CRTI_OBJ, CRTN_OBJ] do
-  sh "ld #{LDFLAGS} -T src/popcorn/arch/#{ARCH}/link.ld -o sysroot/boot/popcorn #{CRTI_OBJ} #{CRTBEGIN_OBJ} #{SOURCE_FILES.pathmap("%{^src,obj}X.o")} #{CRTEND_OBJ} #{CRTN_OBJ}" #"
+  objects = SOURCE_FILES.pathmap("%{^src,obj}X.o")
+  sh "#{LD} #{LDFLAGS} -T src/popcorn/arch/#{ARCH}/link.ld -o sysroot/boot/popcorn #{CRTI_OBJ} #{CRTBEGIN_OBJ} #{objects} #{CRTEND_OBJ} #{CRTN_OBJ}"
 end
 
+task :nort => ["src/buildver.inc", :objects] do
+  objects = SOURCE_FILES.pathmap("%{^src,obj}X.o")
+  sh "ld #{LDFLAGS} -T src/popcorn/arch/#{ARCH}/link.ld -o sysroot/boot/popcorn #{objects}"
+end
 
 task :objects => SOURCE_FILES.pathmap("%{^src,obj}X.o")
 
@@ -44,7 +51,7 @@ end
 
 rule ".o" => [->(f){f.pathmap("%{^obj,src}X.c")}, "obj"] do |srcfile|
   mkdir_p srcfile.name.pathmap("%d")
-  sh "#{CC} #{CFLAGS} -o #{srcfile.name} #{srcfile.source}"
+  sh "#{CC} #{CFLAGS} -o #{srcfile.name} -c #{srcfile.source}"
 end
 
 #todo write rule to make rnux.dsk image
