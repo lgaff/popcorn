@@ -6,6 +6,7 @@ TARGET = "#{ARCH}-unknown-none-elf"
 CC = "clang"
 LD = "ld"
 CFLAGS = "-ffreestanding --sysroot=sysroot -target #{TARGET} -Wall -Wextra -mcmodel=kernel"
+CPPFLAGS = "-D__popcorn_kernel"
 AS = "nasm"
 ASFLAGS = "-f elf64"
 LDFLAGS = "-m elf_x86_64 -nostdlib -static -nostartfiles -nodefaultlibs -v"
@@ -46,7 +47,7 @@ end
 
 rule ".o" => [->(f){f.pathmap("%{^obj,src}X.c")}, "obj"] do |srcfile|
   mkdir_p srcfile.name.pathmap("%d")
-  sh "#{CC} #{CFLAGS} -o #{srcfile.name} -c #{srcfile.source}"
+  sh "#{CC} #{CFLAGS} #{CPPFLAGS} -o #{srcfile.name} -c #{srcfile.source}"
 end
 
 #todo write rule to make rnux.dsk image
