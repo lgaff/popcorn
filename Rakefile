@@ -4,12 +4,11 @@ require 'yaml'
 ARCH = "x86_64"
 TARGET = "#{ARCH}-unknown-none-elf"
 CC = "clang"
-LD = "clang"
-CFLAGS = "-ffreestanding --sysroot=sysroot -target #{TARGET} -Wall -Wextra"
+LD = "ld"
+CFLAGS = "-ffreestanding --sysroot=sysroot -target #{TARGET} -Wall -Wextra -mcmodel=kernel"
 AS = "nasm"
 ASFLAGS = "-f elf64"
-LDFLAGS= "-ffreestanding -nostdlib -target #{TARGET} -Wall -Wextra"
-# LDFLAGS = "-m elf_x86_64 -gc-sections -static -nostartfiles -nodefaultlibs"
+LDFLAGS = "-m elf_x86_64 -nostdlib -static -nostartfiles -nodefaultlibs -v"
 
 PROJECTS = ["popcorn", "libc"]
 
@@ -27,10 +26,6 @@ task :popcorn => ["src/buildver.inc", :objects, CRTI_OBJ, CRTN_OBJ] do
   sh "#{LD} #{LDFLAGS} -T src/popcorn/arch/#{ARCH}/link.ld -o sysroot/boot/popcorn #{CRTI_OBJ} #{CRTBEGIN_OBJ} #{objects} #{CRTEND_OBJ} #{CRTN_OBJ}"
 end
 
-task :nort => ["src/buildver.inc", :objects] do
-  objects = SOURCE_FILES.pathmap("%{^src,obj}X.o")
-  sh "ld #{LDFLAGS} -T src/popcorn/arch/#{ARCH}/link.ld -o sysroot/boot/popcorn #{objects}"
-end
 
 task :objects => SOURCE_FILES.pathmap("%{^src,obj}X.o")
 
