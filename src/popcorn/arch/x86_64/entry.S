@@ -131,7 +131,7 @@ strNolong:
   db "CPU does not support long mode operation",0
   str32e db "IA-32e mode: OK",0
   strPgOK db "Paging: OK",0
-  %include "src/buildver.inc"
+  %include "buildver.inc"
 ;; TODO: fix hard link for build versions here.
 
 section .pagedata
