@@ -1,6 +1,7 @@
 #ifndef _STRING_H
 #define _STRING_H
 
+#include <sys/cdefs.h>
 #include <stddef.h>
 
 void *memmove (void *, const void *, size_t);
