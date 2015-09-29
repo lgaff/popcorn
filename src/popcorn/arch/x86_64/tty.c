@@ -52,8 +52,11 @@ void tty_putat (char c, uint8_t color, size_t x, size_t y)
 }
 
 void tty_putchar (char c) {
-  tty_putat (c, tty_color, tty_column, tty_row);
-  if (++tty_column == VGA_WIDTH)
+  switch (c) {
+  case '\n': tty_scroll(); break;
+  default: tty_putat (c, tty_color, tty_column, tty_row); tty_column++; break;
+  }
+  if (tty_column >= VGA_WIDTH)
     tty_scroll ();
 }
 
