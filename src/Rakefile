@@ -32,13 +32,14 @@ task :sysroot => ["#{SYSROOT}/boot/grub", "#{SYSROOT}/usr/lib", "#{SYSROOT}/usr/
   PROJECTS.each do |project|
     sh "cp -rv #{project}/include #{SYSROOT}/usr/"
   end
+  sh "cp -rv popcorn/arch/#{ARCH}/include #{SYSROOT}/usr/"
 end
 
 file "#{SYSROOT}/usr/lib/libk.a" => "libk:build"
 file "#{SYSROOT}/usr/lib/libc.a" => "libc:build"
 
 namespace :popcorn do
-  POPCORN_CFLAGS = "-ffreestanding --sysroot=#{SYSROOT} -target #{TARGET} -Wall -Wextra -mcmodel=kernel "
+  POPCORN_CFLAGS = "-ffreestanding --sysroot=#{SYSROOT} -target #{TARGET} -Wall -Wextra -mcmodel=kernel"
   POPCORN_CPPFLAGS = "-D_is_popcorn_kernel"
   POPCORN_ASFLAGS = "-f #{ASTARGET}"
   POPCORN_LDFLAGS = "-static -L#{SYSROOT}/usr/lib -m #{LDTARGET} -nostdlib -nostartfiles -nodefaultlibs"
@@ -85,7 +86,7 @@ end
 
 namespace :libk do
 
-  LIBK_CFLAGS = "-ffreestanding --sysroot=#{SYSROOT} -target #{TARGET} -Wall -Wextra -mcmodel=kernel"
+  LIBK_CFLAGS = "-ffreestanding --sysroot=#{SYSROOT} -target #{TARGET} -Wall -Wextra -mcmodel=kernel -mno-sse -mno-mmx"
   LIBK_CPPFLAGS = "-D__is_popcorn_libc -D__is_popcorn_kernel"
   LIBK_ASFLAGS = "-f #{ASTARGET}"
   LIBK_LDFLAGS = "-m #{LDTARGET} -nostdlib -static -nostartfiles -nodefaultlibs"
@@ -115,7 +116,7 @@ namespace :libc do
   LIBC_SOURCES= Rake::FileList.new("libc/**/*.c")
   
   task :build => [:sysroot, OBJDIR, :objects] do
-    objects = SOURCES.pathmap("%{^,#{OBJDIR}/}X.o")
+    objects = LIBC_SOURCES.pathmap("%{^,#{OBJDIR}/}X.o")
     sh "#{AR} rcs #{SYSROOT}/usr/lib/libc.a #{objects}"
   end
 
