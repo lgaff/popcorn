@@ -24,7 +24,6 @@ section .start32_text
 bits 32
 global goshort
 goshort:
-; xchg bx, bx
 mov esi, VERSION
 call print_console
 mov esi, BUILD_DATE
@@ -115,13 +114,18 @@ highHalf:
         mov dx, 0x3F8
         mov al, '.'
         out dx, al
-        ; crt0 begins here        
-        mov rsp, stack_bottom + STACKSIZE
-        ; Call libc global constructors
-        xchg bx, bx
+        lgdt [GDTPtr2 - KERNEL_VBASE]
+        mov ax, 0x10
+        mov ds, ax
+        mov ss, ax
+        mov es, ax
+        mov fs, ax
+        mov gs, ax
+        ; crt0 begins here
+        mov rsp, stack_top
+        cli
         call _init
         call _kmain
-
         cli
 .loop:
   jmp .loop
@@ -162,14 +166,18 @@ PD0:
 
 section .data
 GDT64:
-  dq 0             ; Null descriptor
-  dd 0, 0x00209800 ; 64 bit code
-  dd 0, 0x00009000 ; 64 bit data
+  dd 0, 0             ; Null descriptor
+  dd 0, 0x00209A00 ; 64 bit code
+  dd 0, 0x00009200 ; 64 bit data
 .Ptr:
   dw $ - GDT64 - 1
   dq GDT64 - KERNEL_VBASE
   dd 0
 
+GDTPtr2:
+        dw GDT64.Ptr-GDT64-1
+        dq GDT64
+        
 strBoot db "Boot: OK\n",0
 strEnter db "Entering the kernel: ",0
 
@@ -181,3 +189,4 @@ mb_ptr:
   resb 2
 stack_bottom:
   resb STACKSIZE
+stack_top:      
