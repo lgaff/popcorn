@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <string.h>
 
 typedef struct flags {
   bool pad_zeroes;
@@ -56,6 +57,10 @@ int vsprintf(char *stream, const char *format, va_list args) {
         *sp++ = (char)va_arg(args, int); break;
     case 's':
       s = (char *)va_arg(args, char *);
+      if (attributes.min_width) {
+        if (field_width > (int)strlen (s))
+          sp += pad_field (sp, ' ', field_width - strlen(s));
+      }
       while(*s) {
         *sp++ = *s++;
       }
