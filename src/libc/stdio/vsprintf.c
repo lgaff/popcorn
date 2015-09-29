@@ -7,6 +7,7 @@ typedef struct flags {
   bool pad_zeroes;
   bool min_width;
   bool left_align;
+  bool blank;
 } flags_t;
 
 int vsprintf(char *stream, const char *format, va_list args) {
@@ -14,9 +15,10 @@ int vsprintf(char *stream, const char *format, va_list args) {
   char * s;
   int field_width = -1;
   int len;
-  flags_t attributes = { .pad_zeroes = false,
-                         .min_width = false,
-                         .left_align = false
+  flags_t attributes = { .pad_zeroes = false, 
+                         .min_width  = false,
+                         .left_align = false,
+                         .blank      = false
   };
 
   for (const char *fp = format; *fp; fp++) {
@@ -24,17 +26,13 @@ int vsprintf(char *stream, const char *format, va_list args) {
       *sp++ = *fp;
       continue;
     }
-    ++fp;
 
-    // Check attributes. Yes, an arbitrary number of flags.. There is probably a better way than this.
-    while (*fp) {
-      if (*fp == '0') {
-        attributes.pad_zeroes = true;
-      }
-      else if (*fp == '-')
-        attributes.left_align = true;        
-      else break;
-      fp++;
+  repeat_attribute:
+    ++fp;
+    switch (*fp) {
+    case '0': attributes.pad_zeroes = true; goto repeat_attribute;
+    case '-': attributes.left_align = true; goto repeat_attribute;
+    case ' ': attributes.blank      = true; goto repeat_attribute;
     }
     
     // Field width Skip a sign if given.
@@ -64,6 +62,10 @@ int vsprintf(char *stream, const char *format, va_list args) {
       len = strlen(s);
       if (!attributes.left_align)
         while (len <= field_width--) *sp++ = ' ';
+      if (attributes.blank && len == 0) {
+        *sp++ = ' ';
+        field_width--;
+      }
       while(*s) *sp++ = *s++;
       if (attributes.left_align)
         while (len <= field_width--) *sp++ = ' ';
