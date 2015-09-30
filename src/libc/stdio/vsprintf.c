@@ -44,10 +44,11 @@ char * print_number (char *stream, int n, int base, int field_width, char *sigil
   if (sign) pad_len -= 1;
 
   if (!(attributes & LEFT_ALIGN)) {
+    if (!(attributes & PAD_ZERO)) while (pad_len-- >= 0) *sp++ = ' ';
     if (sign) *sp++ = sign;
     if (sigil && (attributes & ALTERNATE))
       for (size_t i = 0; i < strlen (sigil); i++) *sp++ = sigil[i];
-    while (pad_len-- >= 0) *sp++ = (attributes & PAD_ZERO ? '0' : ' ');
+    if (attributes & PAD_ZERO) while (pad_len-- >= 0) *sp++ = '0';
   }
   else {
     if (sign) *sp++ = sign;
@@ -76,6 +77,7 @@ char * print_number (char *stream, int n, int base, int field_width, char *sigil
 int vsprintf(char *stream, const char *format, va_list args) {
   char *sp = stream;
   char * s;
+  int n;
   int field_width = -1;
   int len;
   uint8_t attributes = 0;
@@ -96,8 +98,8 @@ int vsprintf(char *stream, const char *format, va_list args) {
     case '#': attributes |= ALTERNATE;  goto repeat_attribute;
     }
 
-    if (attributes & LEFT_ALIGN) attributes &= !PAD_ZERO;
-    if (attributes & SIGN) attributes &= !BLANK;
+    if (attributes & LEFT_ALIGN) attributes -= PAD_ZERO;
+    if (attributes & SIGN) attributes -= BLANK;
     
     // Field width Skip a sign if given.
     if (*fp == '-' || *fp == '+')
@@ -141,6 +143,12 @@ int vsprintf(char *stream, const char *format, va_list args) {
       sp = print_number (sp, va_arg(args, int), 16, field_width, "0X", attributes); break;
     case 'x':
       sp = print_number (sp, va_arg(args, int), 16, field_width, "0x", attributes); break;
+    case 'O':
+      attributes |= UPPERCASE;
+    case 'o':
+      n = va_arg(args, int);
+      sp = print_number (sp, n, 8, field_width, (n == 0 ? NULL : "0"), attributes); break;
+      
     default: // unrecognised flag.
       return -1;
     }
