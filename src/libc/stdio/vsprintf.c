@@ -11,6 +11,7 @@
 #define PAD_ZERO   1
 #define LEFT_ALIGN 2
 #define BLANK      4
+#define SIGN       8
 
 char * print_number (char *stream, int n, int base, int field_width, uint8_t attributes) {
   const char *digits = "0123456789abcdefghijklmnopqrstuvwxyz";
@@ -21,11 +22,13 @@ char * print_number (char *stream, int n, int base, int field_width, uint8_t att
   char sign = 0;
   char *sp = stream;
 
+  if (attributes & BLANK) sign = ' ';
+  if (attributes & SIGN) sign = '+';
   if (n < 0) {
     sign = '-';
     n = -n;
   }
-  else if (attributes & BLANK) sign = ' ';
+
 
   n_tmp = n;
   if (n == 0) n_len = 1;
@@ -87,6 +90,10 @@ int vsprintf(char *stream, const char *format, va_list args) {
       attributes |= !PAD_ZERO;
       goto repeat_attribute;
     case ' ': attributes |= BLANK;      goto repeat_attribute;
+    case '+':
+      attributes |= SIGN;
+      attributes |= !BLANK;
+      goto repeat_attribute;
     }
     
     // Field width Skip a sign if given.
