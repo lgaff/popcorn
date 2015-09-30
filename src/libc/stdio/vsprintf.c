@@ -12,16 +12,17 @@
 #define LEFT_ALIGN 2
 #define BLANK      4
 #define SIGN       8
+#define UPPERCASE  16
 
 char * print_number (char *stream, int n, int base, int field_width, uint8_t attributes) {
   const char *digits = "0123456789abcdefghijklmnopqrstuvwxyz";
-  //char ** digits = &digits_lower;
   int n_len = 0;
   int n_tmp;
   int digit;
   char sign = 0;
   char *sp = stream;
 
+  if (attributes & UPPERCASE) digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   if (attributes & BLANK) sign = ' ';
   if (attributes & SIGN) sign = '+';
   if (n < 0) {
@@ -133,9 +134,14 @@ int vsprintf(char *stream, const char *format, va_list args) {
       break;
     case 'd':
       sp = print_number (sp, va_arg(args, int), 10, field_width, attributes); break;
+    case 'X':
+      attributes |= UPPERCASE;
+    case 'x':
+      sp = print_number (sp, va_arg(args, int), 16, field_width, attributes); break;
     default: // unrecognised flag.
       return -1;
-    }      
+    }
+    
   }
   *sp = '\0';
   return sp - stream;
