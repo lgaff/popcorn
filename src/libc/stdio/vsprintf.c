@@ -13,14 +13,16 @@
 #define BLANK      4
 #define SIGN       8
 #define UPPERCASE  16
+#define ALTERNATE  32
 
-char * print_number (char *stream, int n, int base, int field_width, uint8_t attributes) {
+char * print_number (char *stream, int n, int base, int field_width, char *sigil, uint8_t attributes) {
   const char *digits = "0123456789abcdefghijklmnopqrstuvwxyz";
   int n_len = 0;
   int n_tmp;
   int digit;
   char sign = 0;
   char *sp = stream;
+  int pad_len = field_width;
 
   if (attributes & UPPERCASE) digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   if (attributes & BLANK) sign = ' ';
@@ -30,25 +32,27 @@ char * print_number (char *stream, int n, int base, int field_width, uint8_t att
     n = -n;
   }
 
-
   n_tmp = n;
   if (n == 0) n_len = 1;
   while (n_tmp > 0) {
     n_len++;
     n_tmp = (n_tmp - n_tmp % base) / base;
   }
+  pad_len = field_width - n_len;
 
-  if (sign) {
-    if (attributes & LEFT_ALIGN || attributes & PAD_ZERO) *sp++ = sign;
-    if (!(attributes & LEFT_ALIGN)) {
-      while (n_len < field_width--) *sp++ = (attributes & PAD_ZERO ? '0' : ' ');
-      if (!(attributes & PAD_ZERO)) *sp++ = sign;
-    }
+  if (sigil && (attributes & ALTERNATE)) pad_len -= strlen(sigil);
+  if (sign) pad_len -= 1;
+
+  if (!(attributes & LEFT_ALIGN)) {
+    if (sign) *sp++ = sign;
+    if (sigil && (attributes & ALTERNATE))
+      for (size_t i = 0; i < strlen (sigil); i++) *sp++ = sigil[i];
+    while (pad_len-- >= 0) *sp++ = (attributes & PAD_ZERO ? '0' : ' ');
   }
-
   else {
-    if (!(attributes & LEFT_ALIGN))
-      while (n_len <= field_width--) *sp++ = (attributes & PAD_ZERO ? '0' : ' ');
+    if (sign) *sp++ = sign;
+    if (sigil && (attributes & ALTERNATE))
+      for (size_t i = 0; i < strlen (sigil); i++) *sp++ = sigil[i];
   }
 
   n_tmp = n;
@@ -86,16 +90,14 @@ int vsprintf(char *stream, const char *format, va_list args) {
     ++fp;
     switch (*fp) {
     case '0': attributes |= PAD_ZERO;   goto repeat_attribute;
-    case '-':
-      attributes |= LEFT_ALIGN;
-      attributes |= !PAD_ZERO;
-      goto repeat_attribute;
+    case '-': attributes |= LEFT_ALIGN; goto repeat_attribute;
     case ' ': attributes |= BLANK;      goto repeat_attribute;
-    case '+':
-      attributes |= SIGN;
-      attributes |= !BLANK;
-      goto repeat_attribute;
+    case '+': attributes |= SIGN;       goto repeat_attribute;
+    case '#': attributes |= ALTERNATE;  goto repeat_attribute;
     }
+
+    if (attributes & LEFT_ALIGN) attributes &= !PAD_ZERO;
+    if (attributes & SIGN) attributes &= !BLANK;
     
     // Field width Skip a sign if given.
     if (*fp == '-' || *fp == '+')
@@ -133,11 +135,12 @@ int vsprintf(char *stream, const char *format, va_list args) {
         while (len <= field_width--) *sp++ = ' ';
       break;
     case 'd':
-      sp = print_number (sp, va_arg(args, int), 10, field_width, attributes); break;
+      sp = print_number (sp, va_arg(args, int), 10, field_width, NULL, attributes); break;
     case 'X':
       attributes |= UPPERCASE;
+      sp = print_number (sp, va_arg(args, int), 16, field_width, "0X", attributes); break;
     case 'x':
-      sp = print_number (sp, va_arg(args, int), 16, field_width, attributes); break;
+      sp = print_number (sp, va_arg(args, int), 16, field_width, "0x", attributes); break;
     default: // unrecognised flag.
       return -1;
     }
