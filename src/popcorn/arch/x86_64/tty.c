@@ -10,6 +10,12 @@ size_t tty_column;
 uint8_t tty_color;
 static uint16_t *tty_buffer;
 
+void tty_putat (char c, uint8_t color, size_t x, size_t y)
+{
+  const size_t index = y * VGA_WIDTH + x;
+  tty_buffer [index] = VGA_CELL (c, color);
+}
+
 void tty_initialise (void)
 {
   tty_row = 0;
@@ -32,23 +38,19 @@ void tty_scroll()
 {
   tty_column = 0;
   tty_row++;
-  if (tty_row == VGA_HEIGHT)
+  if (tty_row >= VGA_HEIGHT)
   {
     // scroll that shit cracka
-    memmove (tty_buffer, (const void *)tty_buffer + VGA_WIDTH, VGA_WIDTH * (VGA_HEIGHT - 1));
+    memmove (tty_buffer, (const void *)tty_buffer + VGA_WIDTH * 2, VGA_WIDTH * 2 * (VGA_HEIGHT - 1));
     tty_row = VGA_HEIGHT - 1;
+    for (size_t x = 0; x < VGA_WIDTH; x++)
+      tty_putat (' ', tty_color, x, tty_row);
   }
 }
 
 void tty_setcolor (uint8_t color)
 {
   tty_color = color;
-}
-
-void tty_putat (char c, uint8_t color, size_t x, size_t y)
-{
-  const size_t index = y * VGA_WIDTH + x;
-  tty_buffer [index] = VGA_CELL (c, color);
 }
 
 void tty_putchar (char c) {
