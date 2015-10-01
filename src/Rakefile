@@ -32,7 +32,8 @@ task :sysroot => ["#{SYSROOT}/boot/grub", "#{SYSROOT}/usr/lib", "#{SYSROOT}/usr/
   PROJECTS.each do |project|
     sh "cp -rv #{project}/include #{SYSROOT}/usr/"
   end
-  sh "cp -rv popcorn/arch/#{ARCH}/include #{SYSROOT}/usr/"
+  # This snuck in from libc feature, but won't be required until arch specific includes are needed.
+  # sh "cp -rv popcorn/arch/#{ARCH}/include #{SYSROOT}/usr/"
 end
 
 file "#{SYSROOT}/usr/lib/libk.a" => "libk:build"
