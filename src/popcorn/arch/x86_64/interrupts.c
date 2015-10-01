@@ -45,6 +45,8 @@ static void idt_set_gate(uint8_t index, uint64_t base, uint16_t selector, uint8_
 
 void isr_handler(uint8_t interrupt_number)
 {
+  asm ("xchg %bx, %bx\n");
+  tty_writestring ( "PANIC: ");
   tty_writestring(interrupt_types[interrupt_number]);
   for(;;);
 }

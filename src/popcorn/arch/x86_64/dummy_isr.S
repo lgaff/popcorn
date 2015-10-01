@@ -24,7 +24,8 @@ idt_flush:
         isr%1:
 	cli
         xchg bx, bx
-	  push byte %1
+        mov rdi, %1
+        pop rsi
 	  jmp isr_common_stub	; The error code is already on the stack, so isr_common stub still pops 2 values off
 %endmacro
 
