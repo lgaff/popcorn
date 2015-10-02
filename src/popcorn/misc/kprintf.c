@@ -10,6 +10,7 @@ char print_buffer[1024];
 void kprintf (const char *fmt, ...) {
   va_list arg_ptr;
   va_start (arg_ptr, fmt);
-  sprintf (print_buffer, fmt, arg_ptr);
+  vsprintf (print_buffer, fmt, arg_ptr);
+  va_end (arg_ptr);
   tty_writestring(print_buffer);
 }
