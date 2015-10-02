@@ -8,5 +8,6 @@ int sprintf (char *stream, const char *fmt, ...) {
   va_list arg_ptr;
   va_start (arg_ptr, fmt);
   ret = vsprintf (stream, fmt, arg_ptr);
+  va_end (arg_ptr);
   return ret;
 }
