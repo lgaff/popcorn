@@ -39,7 +39,7 @@ file "#{SYSROOT}/usr/lib/libk.a" => "libk:build"
 file "#{SYSROOT}/usr/lib/libc.a" => "libc:build"
 
 namespace :popcorn do
-  POPCORN_CFLAGS = "-ffreestanding --sysroot=#{SYSROOT} -target #{TARGET} -Wall -Wextra -mcmodel=kernel"
+  POPCORN_CFLAGS = "-ffreestanding --sysroot=#{SYSROOT} -target #{TARGET} -Wall -Wextra -mcmodel=kernel -mno-sse -mno-mmx"
   POPCORN_CPPFLAGS = "-D_is_popcorn_kernel"
   POPCORN_ASFLAGS = "-f #{ASTARGET}"
   POPCORN_LDFLAGS = "-static -L#{SYSROOT}/usr/lib -m #{LDTARGET} -nostdlib -nostartfiles -nodefaultlibs"
