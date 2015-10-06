@@ -99,7 +99,7 @@ namespace :libk do
   LIBK_ASFLAGS = "-f #{ASTARGET}"
   LIBK_LDFLAGS = "-m #{LDTARGET} -nostdlib -static -nostartfiles -nodefaultlibs"
 
-  LIBK_SOURCES= Rake::FileList.new("libc/**/*.cpp")
+  LIBK_SOURCES= Rake::FileList.new("libc/**/*.cpp", "libc/**/*.c")
   
   task :build => [:sysroot, OBJDIR, :objects] do
     objects = LIBK_SOURCES.pathmap("%{^,#{OBJDIR}/}X.libk.o")
@@ -126,7 +126,7 @@ namespace :libc do
   LIBC_ASFLAGS = "-f #{ASTARGET}"
   LIBC_LDFLAGS = "-m #{LDTARGET} -nostdlib -static -nostartfiles -nodefaultlibs -std=gnu11"
 
-  LIBC_SOURCES= Rake::FileList.new("libc/**/*.cpp")
+  LIBC_SOURCES= Rake::FileList.new("libc/**/*.cpp", "libc/**/*.c")
   
   task :build => [:sysroot, OBJDIR, :objects] do
     objects = LIBC_SOURCES.pathmap("%{^,#{OBJDIR}/}X.o")
