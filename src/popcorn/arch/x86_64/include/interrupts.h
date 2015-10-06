@@ -9,6 +9,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct registers
 {
   uint64_t ds;
@@ -35,7 +39,7 @@ typedef struct registers
 
 void initialise_idt();
 
-extern void idt_flush();
+extern void idt_flush(uint64_t);
 
 struct idt_entry
 {
@@ -56,7 +60,7 @@ struct idt_ptr
 }__attribute__((packed));
 typedef struct idt_ptr idt_ptr_t;
 
-typedef void (*isr_t)(); 
+typedef void (*isr_t)(registers_t); 
 void register_interrupt_handler(uint8_t index, isr_t handler);
 
 void remap_irq();
@@ -111,5 +115,9 @@ extern void irq12();
 extern void irq13();
 extern void irq14();
 extern void irq15();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INTERRUPTS_H */

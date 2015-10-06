@@ -46,9 +46,10 @@ namespace :popcorn do
   POPCORN_LIBS = "-lk"
   
   # Sources, generic and platform specific
-  COMMON_SOURCES=Rake::FileList.new("popcorn/**/*.S", "popcorn/**/*.c")
+  COMMON_SOURCES=Rake::FileList.new("popcorn/**/*.S", "popcorn/**/*.cpp")
            .exclude(/arch/)
-  ARCH_SOURCES=Rake::FileList.new("popcorn/arch/#{ARCH}/**/*.[cS]").exclude(/crt..S/)
+  ARCH_ASM_SOURCES=Rake::FileList.new("popcorn/arch/#{ARCH}/**/*.S").exclude(/crt..S/)
+  ARCH_CPP_SOURCES=Rake::FileList.new("popcorn/arch/#{ARCH}/**/*.cpp")
 
   CRTI_OBJ="#{OBJDIR}/popcorn/arch/#{ARCH}/crti.o"
   CRTBEGIN_OBJ=%x[#{CC} -print-file-name=crtbegin.o].chomp
@@ -56,15 +57,17 @@ namespace :popcorn do
   CRTN_OBJ="#{OBJDIR}/popcorn/arch/#{ARCH}/crtn.o"
 
   task :build => [:sysroot, OBJDIR, "buildver.inc", :objects, CRTI_OBJ, CRTN_OBJ, "#{SYSROOT}/usr/lib/libk.a"] do
-    arch_objects = ARCH_SOURCES.pathmap("%{^,#{OBJDIR}/}X.o")
+    arch_asm_objects = ARCH_ASM_SOURCES.pathmap("%{^,#{OBJDIR}/}X.o")
+    arch_cpp_objects = ARCH_CPP_SOURCES.pathmap("%{^,#{OBJDIR}/}X.o")
     common_objects = COMMON_SOURCES.pathmap("%{^,#{OBJDIR}/}X.o")
-    objects = "#{CRTI_OBJ} #{CRTBEGIN_OBJ} #{arch_objects} #{common_objects} #{CRTEND_OBJ} #{CRTN_OBJ}"
+    objects = "#{CRTI_OBJ} #{CRTBEGIN_OBJ} #{arch_asm_objects} #{arch_cpp_objects} #{common_objects} #{CRTEND_OBJ} #{CRTN_OBJ}"
     sh "#{LD} #{POPCORN_LDFLAGS} -T popcorn/arch/#{ARCH}/link.ld -o #{SYSROOT}/boot/popcorn #{objects} #{POPCORN_LIBS}"
   end
 
-  task :objects => [:common, :arch]
+  task :objects => [:common, :arch_asm, :arch_cpp]
   task :common => COMMON_SOURCES.pathmap("%{^,#{OBJDIR}/}X.o")
-  task :arch => ARCH_SOURCES.pathmap("%{^,#{OBJDIR}/}X.o")
+  task :arch_asm => ARCH_ASM_SOURCES.pathmap("%{^,#{OBJDIR}/}X.o")
+  task :arch_cpp => ARCH_CPP_SOURCES.pathmap("%{^,#{OBJDIR}/}X.o")  
 
   file "buildver.inc" do
     version = YAML.load_file('../version.yml')
@@ -82,6 +85,11 @@ namespace :popcorn do
     sh "#{CC} #{POPCORN_CFLAGS} #{POPCORN_CPPFLAGS} -o #{srcfile.name} -c #{srcfile.source}"
   end
 
+  rule ".o" => [->(f){f.pathmap("%{^#{OBJDIR}/,}X.cpp")}, OBJDIR] do |srcfile|
+    mkdir_p srcfile.name.pathmap("%d")
+    sh "#{CC} #{POPCORN_CFLAGS} #{POPCORN_CPPFLAGS} -o #{srcfile.name} -c #{srcfile.source}"
+  end
+
 end
 
 namespace :libk do
@@ -91,7 +99,7 @@ namespace :libk do
   LIBK_ASFLAGS = "-f #{ASTARGET}"
   LIBK_LDFLAGS = "-m #{LDTARGET} -nostdlib -static -nostartfiles -nodefaultlibs"
 
-  LIBK_SOURCES= Rake::FileList.new("libc/**/*.c")
+  LIBK_SOURCES= Rake::FileList.new("libc/**/*.cpp")
   
   task :build => [:sysroot, OBJDIR, :objects] do
     objects = LIBK_SOURCES.pathmap("%{^,#{OBJDIR}/}X.libk.o")
@@ -104,6 +112,11 @@ namespace :libk do
     mkdir_p srcfile.name.pathmap("%d")
     sh "#{CC} #{LIBK_CFLAGS} #{LIBK_CPPFLAGS} -o #{srcfile.name} -c #{srcfile.source}"
   end
+
+  rule ".libk.o" => [->(f){f.pathmap("%{^#{OBJDIR}/,}d/%{.libk.o,}f.cpp")}, OBJDIR] do |srcfile|
+    mkdir_p srcfile.name.pathmap("%d")
+    sh "#{CC} #{LIBK_CFLAGS} #{LIBK_CPPFLAGS} -o #{srcfile.name} -c #{srcfile.source}"
+  end
     
 end
 
@@ -113,7 +126,7 @@ namespace :libc do
   LIBC_ASFLAGS = "-f #{ASTARGET}"
   LIBC_LDFLAGS = "-m #{LDTARGET} -nostdlib -static -nostartfiles -nodefaultlibs -std=gnu11"
 
-  LIBC_SOURCES= Rake::FileList.new("libc/**/*.c")
+  LIBC_SOURCES= Rake::FileList.new("libc/**/*.cpp")
   
   task :build => [:sysroot, OBJDIR, :objects] do
     objects = LIBC_SOURCES.pathmap("%{^,#{OBJDIR}/}X.o")
@@ -126,6 +139,12 @@ namespace :libc do
     mkdir_p srcfile.name.pathmap("%d")
     sh "#{CC} #{LIBC_CFLAGS} #{LIBC_CPPFLAGS} -o #{srcfile.name} -c #{srcfile.source}"
   end
+
+  rule ".o" => [->(f){f.pathmap("%{^#{OBJDIR}/,}X.cpp")}, OBJDIR] do |srcfile|
+    mkdir_p srcfile.name.pathmap("%d")
+    sh "#{CC} #{LIBC_CFLAGS} #{LIBC_CPPFLAGS} -o #{srcfile.name} -c #{srcfile.source}"
+  end
+
     
 end
 

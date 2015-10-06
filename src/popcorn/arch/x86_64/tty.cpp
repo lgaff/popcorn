@@ -41,7 +41,7 @@ void tty_scroll()
   if (tty_row >= VGA_HEIGHT)
   {
     // scroll that shit cracka
-    memmove (tty_buffer, (const void *)tty_buffer + VGA_WIDTH * 2, VGA_WIDTH * 2 * (VGA_HEIGHT - 1));
+    memmove (tty_buffer, (const void *)(tty_buffer + VGA_WIDTH * 2), VGA_WIDTH * 2 * (VGA_HEIGHT - 1));
     tty_row = VGA_HEIGHT - 1;
     for (size_t x = 0; x < VGA_WIDTH; x++)
       tty_putat (' ', tty_color, x, tty_row);

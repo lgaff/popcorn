@@ -8,7 +8,7 @@ idt_entry_t idt_entries[256];
 idt_ptr_t idt_pointer;
 
 
-static char *interrupt_types[19] =
+static const char *interrupt_types[19] =
   {
     "Division by zero",
     "Debug exception",
@@ -43,7 +43,7 @@ static void idt_set_gate(uint8_t index, uint64_t base, uint16_t selector, uint8_
   idt_entries[index].flags = flags /* | 0x60 */;
 }
 
-void isr_handler(uint8_t interrupt_number)
+extern "C" void isr_handler(uint8_t interrupt_number)
 {
   asm ("xchg %bx, %bx\n");
   tty_writestring ( "PANIC: ");
@@ -51,7 +51,7 @@ void isr_handler(uint8_t interrupt_number)
   for(;;);
 }
 
-void irq_handler(registers_t regs)
+extern "C" void irq_handler(registers_t regs)
 {
   // Send an end of interrupt signal to the PIC. 
   if(regs.interrupt_number >= 40) // need to signal the slave as well.
@@ -73,9 +73,6 @@ void register_interrupt_handler(uint8_t index, isr_t handler)
 }
 
  
-idt_entry_t idt_entries[256]; 
-idt_ptr_t idt_pointer;
-
 void initialise_idt()
 {
   idt_pointer.limit = sizeof(idt_entry_t) * 256 -1;

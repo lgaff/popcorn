@@ -3,7 +3,7 @@
 #include <interrupts.h>
 #include <kernel/tty.h>
 
-void _kmain ()
+extern "C" void _kmain ()
 {
   /* Test code follows. delete me when kdev gets going. */
   /* This should still be identity mapped */

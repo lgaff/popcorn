@@ -15,7 +15,7 @@
 #define UPPERCASE  16
 #define ALTERNATE  32
 
-char * print_number (char *stream, int n, int base, int field_width, char *sigil, uint8_t attributes) {
+char * print_number (char *stream, int n, int base, int field_width, const char *sigil, uint8_t attributes) {
   const char *digits = "0123456789abcdefghijklmnopqrstuvwxyz";
   int n_len = 0;
   int n_tmp;
