@@ -2,6 +2,7 @@
 #include <kernel/io.h>
 #include <interrupts.h>
 #include <kernel/tty.h>
+#include <kernel/panic.h>
 
 extern "C" void _kmain ()
 {
@@ -11,6 +12,7 @@ extern "C" void _kmain ()
   tty_writestring ("Popcorn kernel 0.0.1-very-alpha\n");
   initialise_idt ();
   tty_writestring ("Interrupts enabled (but not configured)\n");
+  panic();
   
   for(;;) {}
 }
