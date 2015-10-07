@@ -2,7 +2,8 @@
 #include <kernel/io.h>
 #include <interrupts.h>
 #include <string.h>
-
+#include <logging.h>
+#include <kernel/kprintf.h>
 isr_t interrupt_handlers[256];
 idt_entry_t idt_entries[256]; 
 idt_ptr_t idt_pointer;
@@ -46,8 +47,7 @@ static void idt_set_gate(uint8_t index, uint64_t base, uint16_t selector, uint8_
 extern "C" void isr_handler(uint8_t interrupt_number)
 {
   asm ("xchg %bx, %bx\n");
-  tty_writestring ( "PANIC: ");
-  tty_writestring(interrupt_types[interrupt_number]);
+  Log::Fatal ("%s triggered before initialised", interrupt_types[interrupt_number]);
   for(;;);
 }
 

@@ -87,7 +87,7 @@ namespace :popcorn do
 
   rule ".o" => [->(f){f.pathmap("%{^#{OBJDIR}/,}X.cpp")}, OBJDIR] do |srcfile|
     mkdir_p srcfile.name.pathmap("%d")
-    sh "#{CC} #{POPCORN_CFLAGS} #{POPCORN_CPPFLAGS} -o #{srcfile.name} -c #{srcfile.source}"
+    sh "#{CC} #{POPCORN_CFLAGS} #{POPCORN_CPPFLAGS} -std=c++11 -o #{srcfile.name} -c #{srcfile.source}"
   end
 
 end
@@ -115,7 +115,7 @@ namespace :libk do
 
   rule ".libk.o" => [->(f){f.pathmap("%{^#{OBJDIR}/,}d/%{.libk.o,}f.cpp")}, OBJDIR] do |srcfile|
     mkdir_p srcfile.name.pathmap("%d")
-    sh "#{CC} #{LIBK_CFLAGS} #{LIBK_CPPFLAGS} -o #{srcfile.name} -c #{srcfile.source}"
+    sh "#{CC} #{LIBK_CFLAGS} #{LIBK_CPPFLAGS} -std=c++11 -o #{srcfile.name} -c #{srcfile.source}"
   end
     
 end
@@ -142,7 +142,7 @@ namespace :libc do
 
   rule ".o" => [->(f){f.pathmap("%{^#{OBJDIR}/,}X.cpp")}, OBJDIR] do |srcfile|
     mkdir_p srcfile.name.pathmap("%d")
-    sh "#{CC} #{LIBC_CFLAGS} #{LIBC_CPPFLAGS} -o #{srcfile.name} -c #{srcfile.source}"
+    sh "#{CC} #{LIBC_CFLAGS} #{LIBC_CPPFLAGS} -std=c++11 -o #{srcfile.name} -c #{srcfile.source}"
   end
 
     
