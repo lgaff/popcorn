@@ -149,7 +149,7 @@ namespace :libc do
 end
 
 task :iso => %w[popcorn:build] do
-  sh "grub-mkrescue -o popcorn.iso #{SYSROOT}"
+  sh "grub-mkrescue -o ../popcorn.iso #{SYSROOT}"
 end
 
 task :clean do
