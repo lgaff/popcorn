@@ -13,7 +13,7 @@ static char * log_level_str[] = {
 };
 
 char log_buffer [1024];
-void _log_write (log_level_t loglevel, char * title, int line_no, char *fmt, ...) {
+void _log_write (log_level_t loglevel, const char * title, int line_no, char *fmt, ...) {
   if (loglevel >= debug_level) {
     va_list arg_ptr;
     va_start (arg_ptr, fmt);

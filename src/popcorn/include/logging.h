@@ -12,7 +12,7 @@ typedef enum {
 
 extern log_level_t debug_level;
 
-extern void _log_write (log_level_t, char *, int, char *, ...);
+extern void _log_write (log_level_t, const char *, int, char *, ...);
 
 #ifndef QUIET
 #define log_write(level, ...) _log_write(level, __FILE__, __LINE__, __VA_ARGS__)
