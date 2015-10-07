@@ -1,0 +1,5 @@
+popcorn.iso
+obj/
+sysroot/
+src/buildver.inc
+\#*\#
