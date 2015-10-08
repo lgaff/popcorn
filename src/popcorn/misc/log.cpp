@@ -1,4 +1,4 @@
-#include <logging.h>
+#include <kernel/log.h>
 #include <stdio.h>
 #include <kernel/kprintf.h>
 

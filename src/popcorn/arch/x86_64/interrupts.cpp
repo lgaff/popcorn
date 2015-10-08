@@ -1,9 +1,7 @@
-#include <kernel/tty.h>
-#include <kernel/io.h>
-#include <interrupts.h>
 #include <string.h>
-#include <logging.h>
-#include <kernel/kprintf.h>
+#include <kernel/io.h>
+#include <kernel/interrupts.h>
+#include <kernel/log.h>
 isr_t interrupt_handlers[256];
 idt_entry_t idt_entries[256]; 
 idt_ptr_t idt_pointer;

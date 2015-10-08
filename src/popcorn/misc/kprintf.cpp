@@ -1,9 +1,9 @@
 /* Early kernel formatted output to console device. */
 
-#include <kernel/kprintf.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <kernel/tty.h>
+#include <kernel/kprintf.h>
+#include <kernel/vga.h>
 
 char print_buffer[1024];
 
@@ -12,5 +12,5 @@ void kprintf (const char *fmt, ...) {
   va_start (arg_ptr, fmt);
   vsprintf (print_buffer, fmt, arg_ptr);
   va_end (arg_ptr);
-  tty_writestring(print_buffer);
+  tty0.Write (print_buffer);
 }

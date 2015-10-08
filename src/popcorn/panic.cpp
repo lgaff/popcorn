@@ -1,8 +1,8 @@
 #include <stdlib.h>
-#include <kernel/tty.h>
+#include <kernel/log.h>
 
 void panic () {
-  tty_writestring ("PANIC: PANIC called but PANIC does nothing yet! DOUBLE PANIC!\n");
+  Log::Fatal ("PANIC: kernel panic doesn't exist yet! DOUBLE PANIC!!");
   for (;;);
   __builtin_unreachable();
 }

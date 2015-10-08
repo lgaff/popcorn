@@ -1,5 +1,5 @@
-#ifndef _LOGGING_H
-#define _LOGGING_H
+#ifndef _LOG_H
+#define _LOG_H
 
 #include <stdarg.h>
 
@@ -13,7 +13,6 @@ enum class Level {
   Fatal = 4
 };
 
-#define MAKEASTRING(x) #x
   //  class Log {
   //  public:
   //    Log (enum Level);
@@ -42,4 +41,4 @@ enum class Level {
   //  };
 } /* namespace Log */
 
-#endif /* _LOGGING_H */
+#endif /* _LOG_H */

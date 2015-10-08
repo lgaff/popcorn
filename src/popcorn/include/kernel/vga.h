@@ -1,37 +1,73 @@
 #ifndef _KERNEL_VGA_H
 #define _KERNEL_VGA_H
 
-/* vga.h - kernel-space VGA primitives to implement a console driver
- * April 22 2015
- */
 #include <stdint.h>
+#include <stddef.h>
 
-enum VGA_COLOR
-{
-  COLOR_BLACK      = 0,
-  COLOR_BLUE       = 1,
-  COLOR_GREEN      = 2,
-  COLOR_CYAN       = 3,
-  COLOR_RED        = 4,
-  COLOR_MAGENTA    = 5,
-  COLOR_BROWN      = 6,
-  COLOR_LT_GREY    = 7,
-  COLOR_DK_GREY    = 8,
-  COLOR_LT_BLUE    = 9,
-  COLOR_LT_GREEN   = 10,
-  COLOR_LT_CYAN    = 11,
-  COLOR_LT_RED     = 12,
-  COLOR_LT_MAGENTA = 13,
-  COLOR_LT_BROWN   = 14,
-  COLOR_WHITE      = 15
-};
+namespace VGA {
 
-#define VGA_ATTRIBUTE(b, f) (uint8_t) (b << 4 | f & 0x0F)
-#define VGA_CELL(c, a) (uint16_t)c | (uint16_t)a << 8
+  
+  enum Color4 : uint8_t {
+    Black = 0,
+    Blue,
+    Green,
+    Cyan,
+    Red,
+    Magenta,
+    Brown,
+    LightGrey,
+    DarkGrey,
+    LightBlue,
+    LightGreen,
+    LightCyan,
+    LightRed,
+    LightMagenta,
+    LightBrown,
+    White
+  };
 
-static const size_t VGA_WIDTH = 80;
-static const size_t VGA_HEIGHT = 25;
 
-static uint16_t* const VGA_BUFFER = (uint16_t *)0xB8000;
+  enum Blink : uint8_t {
+    True = 0,
+    False = 0x80
+  };
+
+  class TextBuffer {
+  public:
+    void Init ();
+    void Clear ();
+    void Scroll ();
+    void SetX (size_t newX) { x = newX; }
+    void SetY (size_t newY) { y = newY; }
+    void SetXY (size_t newX, size_t newY) { x = newX; y = newY; }
+    void SetFG (enum Color4 newFG) { fg = newFG; }
+    void setBG (enum Color4 newBG) { bg = newBG; }
+    void PutChar (char);
+    void PutAt (size_t, size_t, char);
+    void Write (char const *);
+    void WriteLine (char const *);
+    uint16_t *GetBuffer ();
+  private:
+    unsigned int x;
+    unsigned int y;
+    enum Color4 fg;
+    enum Color4 bg;
+    enum Blink blink;
+    unsigned int width;
+    unsigned int height;
+    uint16_t *buffer;
+    uint8_t Attribute() {
+      return (bg << 4 | fg & 0x0F) | blink;
+    }
+    uint16_t Cell(char c) {
+      return (uint16_t)this->Attribute() << 8 | c;
+    }
+    int IsPrintable (char);
+    void Backspace ();
+    void HorizontalTab ();
+    void Update ();
+  };
+    
+} /* namespace VGA */
 
 #endif
