@@ -33,6 +33,7 @@ task :sysroot => ["#{SYSROOT}/boot/grub", "#{SYSROOT}/usr/lib", "#{SYSROOT}/usr/
     sh "cp -rv #{project}/include #{SYSROOT}/usr/"
   end
   sh "cp -rv popcorn/arch/#{ARCH}/include #{SYSROOT}/usr/"
+  sh "cp -rv include #{SYSROOT}/usr/"  
 end
 
 file "#{SYSROOT}/usr/lib/libk.a" => "libk:build"
