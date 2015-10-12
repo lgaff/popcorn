@@ -258,15 +258,15 @@ typedef struct multiboot_mod_list multiboot_module_t;
 /* APM BIOS info.  */
 struct multiboot_apm_info
 {
-  grub_uint16_t version;
-  grub_uint16_t cseg;
-  grub_uint32_t offset;
-  grub_uint16_t cseg_16;
-  grub_uint16_t dseg;
-  grub_uint16_t flags;
-  grub_uint16_t cseg_len;
-  grub_uint16_t cseg_16_len;
-  grub_uint16_t dseg_len;
+  uint16_t version;
+  uint16_t cseg;
+  uint32_t offset;
+  uint16_t cseg_16;
+  uint16_t dseg;
+  uint16_t flags;
+  uint16_t cseg_len;
+  uint16_t cseg_16_len;
+  uint16_t dseg_len;
 };
 
 #endif /* ! ASM_FILE */
