@@ -28,7 +28,6 @@ mov esi, VERSION
 call print_console
 mov esi, BUILD_DATE
 call print_console
-; save the multiboot info in e[ab]x
 mov [mb_signature - KERNEL_VBASE], eax
 mov [mb_ptr - KERNEL_VBASE], ebx
 
@@ -123,6 +122,8 @@ highHalf:
         mov gs, ax
         ; crt0 begins here
         mov rsp, stack_top
+        mov rdi, [mb_ptr]
+        mov rsi, [mb_signature]
         cli
         call _init
         call _kmain
@@ -184,9 +185,9 @@ strEnter db "Entering the kernel: ",0
 section .bss
 align 32
 mb_signature:
-  resb 2
+  resb 4
 mb_ptr:
-  resb 2
+  resb 4
 stack_bottom:
   resb STACKSIZE
 stack_top:      
