@@ -78,7 +78,7 @@ int vsprintf(char *stream, const char *format, va_list args) {
   char *sp = stream;
   char * s;
   int n;
-  int field_width = -1;
+  int field_width;
   int len;
   uint8_t attributes = 0;
 
@@ -88,6 +88,7 @@ int vsprintf(char *stream, const char *format, va_list args) {
       continue;
     }
 
+    field_width = -1;
   repeat_attribute:
     ++fp;
     switch (*fp) {
