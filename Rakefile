@@ -14,25 +14,27 @@ AS = "nasm"
 AR = "ar"
 
 ## Build folders
-SYSROOT="../sysroot"
-OBJDIR="../obj"
+SYSROOT="sysroot"
+OBJDIR="obj"
+BOOT="#{SYSROOT}/boot/grub"
 
 directory OBJDIR
 PROJECTS= ["popcorn", "libc"]
 ## System root folders
-directory SYSROOT
 directory "#{SYSROOT}/boot/grub"
-directory "#{SYSROOT}/usr/lib"
 directory "#{SYSROOT}/usr/include"
+directory "#{SYSROOT}/usr/lib"
 
 task :default => %w[popcorn:build]
 
-task :sysroot => ["#{SYSROOT}/boot/grub", "#{SYSROOT}/usr/lib", "#{SYSROOT}/usr/include"] do
-  sh "cp ../util/grub.cfg #{SYSROOT}/boot/grub/"
+task :rootdirs => [ "#{SYSROOT}/boot/grub", "#{SYSROOT}/usr/include", "#{SYSROOT}/usr/lib" ]
+
+task :system => [ :rootdirs ] do
+  sh "cp -v util/grub.cfg #{SYSROOT}/boot/grub/"
   PROJECTS.each do |project|
     sh "cp -rv #{project}/include #{SYSROOT}/usr/"
   end
-  sh "cp -rv popcorn/arch/#{ARCH}/include #{SYSROOT}/usr/"
+  sh "cp -rv popcorn/arch/#{ARCH}/include #{SYSROOT}/usr/" if Dir.exists?( "popcorn/arch/#{ARCH}/include" )
   sh "cp -rv include #{SYSROOT}/usr/"  
 end
 
@@ -57,7 +59,7 @@ namespace :popcorn do
   CRTEND_OBJ=%x[#{CC} -print-file-name=crtend.o].chomp
   CRTN_OBJ="#{OBJDIR}/popcorn/arch/#{ARCH}/crtn.o"
 
-  task :build => [:sysroot, OBJDIR, "buildver.inc", :objects, CRTI_OBJ, CRTN_OBJ, "#{SYSROOT}/usr/lib/libk.a"] do
+  task :build => [ :system, OBJDIR, "buildver.inc", :objects, CRTI_OBJ, CRTN_OBJ, "#{SYSROOT}/usr/lib/libk.a"] do
     arch_asm_objects = ARCH_ASM_SOURCES.pathmap("%{^,#{OBJDIR}/}X.o")
     arch_cpp_objects = ARCH_CPP_SOURCES.pathmap("%{^,#{OBJDIR}/}X.o")
     common_objects = COMMON_SOURCES.pathmap("%{^,#{OBJDIR}/}X.o")
@@ -71,7 +73,7 @@ namespace :popcorn do
   task :arch_cpp => ARCH_CPP_SOURCES.pathmap("%{^,#{OBJDIR}/}X.o")  
 
   file "buildver.inc" do
-    version = YAML.load_file('../version.yml')
+    version = YAML.load_file('version.yml')
     sh "echo 'VERSION db \"Popcorn kernel v#{version['major']}.#{version['minor']}.#{version['patch']}-#{version['additional_labels']}\", 0' > buildver.inc"
     sh "echo 'BUILD_DATE db \"Build date #{DateTime.now}\", 0' >> buildver.inc"
   end
@@ -102,7 +104,7 @@ namespace :libk do
 
   LIBK_SOURCES= Rake::FileList.new("libc/**/*.cpp", "libc/**/*.c")
   
-  task :build => [:sysroot, OBJDIR, :objects] do
+  task :build => [:system, OBJDIR, :objects] do
     objects = LIBK_SOURCES.pathmap("%{^,#{OBJDIR}/}X.libk.o")
     sh "#{AR} rcs #{SYSROOT}/usr/lib/libk.a #{objects}"
   end
@@ -129,7 +131,7 @@ namespace :libc do
 
   LIBC_SOURCES= Rake::FileList.new("libc/**/*.cpp", "libc/**/*.c")
   
-  task :build => [:sysroot, OBJDIR, :objects] do
+  task :build => [:system, OBJDIR, :objects] do
     objects = LIBC_SOURCES.pathmap("%{^,#{OBJDIR}/}X.o")
     sh "#{AR} rcs #{SYSROOT}/usr/lib/libc.a #{objects}"
   end
@@ -150,11 +152,11 @@ namespace :libc do
 end
 
 task :iso => %w[popcorn:build] do
-  sh "grub-mkrescue -o ../popcorn.iso #{SYSROOT}"
+  sh "grub-mkrescue -o popcorn.iso #{SYSROOT}"
 end
 
 task :clean do
   sh "rm -rf #{SYSROOT}"
   sh "rm -rf #{OBJDIR}"
-  sh "rm buildver.inc"
+  sh "if [[ -e buildver.inc ]];then rm buildver.inc; fi"
 end
